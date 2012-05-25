@@ -1,0 +1,5 @@
+git-excluded
+*.pyc
+*.db
+errors.py
+cookie
