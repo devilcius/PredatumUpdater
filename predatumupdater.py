@@ -1,5 +1,6 @@
-    # -*- coding: utf_8 -*-
+# -*- coding: utf_8 -*-
 import errors
+from time import sleep
 import urllib2
 from urllib2 import URLError, HTTPError
 import os.path
@@ -301,7 +302,7 @@ class Predatum:
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['track'] = row[7]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['file_size'] = row[8]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['file_date'] = row[9]
-            albumsToUpdate[albumCounter]['tracks'][trackCounter]['track_duration'] = row[10]
+            albumsToUpdate[albumCounter]['tracks'][trackCounter]['duration'] = row[10]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['bitrate'] = row[11]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['quality'] = row[12]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['lame_encoded'] = row[13]
@@ -376,12 +377,12 @@ def main():
     config = ConfigParser.ConfigParser()
     config.read('predatumupdater.cfg')
 
-    scan = Scan(config)
-    scan.scanFolders(config.get("options","musicdir"))
+    #scan = Scan(config)
+    #scan.scanFolders(config.get("options","musicdir"))
     
     pred = Predatum(config)
     while pred.updateSite():
-        continue
+        sleep(0.1) #prevents CPU going 100%
 
     
 
