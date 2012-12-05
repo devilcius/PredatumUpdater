@@ -1,6 +1,6 @@
 # -*- coding: utf_8 -*-
 import errors
-from time import sleep
+from time import sleep, clock, time
 import urllib2
 from urllib2 import URLError, HTTPError
 import os.path
@@ -17,13 +17,15 @@ from sqlite3 import *
 import json as simplejson
 import re
 
+#elapsedTime = 0;
+
 class Error(Exception):
     """Base class for exceptions in this module."""
     pass
 
 
 class DataBase():
-    
+
     def __init__(self):
         self.conn = connect('music.db')
         self.curs = self.conn.cursor()
@@ -34,13 +36,13 @@ class DataBase():
         self.curs.execute('''create table if not exists tracks
           (id integer primary key, folder_path text, file_name text, artist text, title text,
           album text, genre text, year int, track integer, file_size integer, file_date text, track_duration integer,
-          bitrate integer, quality text, lame_encoded integer, file_type text, comment text, rating integer, pred_updated integer)''')
+          bitrate integer, quality text, lame_encoded integer, file_type text, comment text, rating integer, pred_updated integer)''')  # lint:ok
 
     def checkRecordExists(self, file_name, file_size):
 
         return self.conn.execute("select id from tracks where file_name = ? and file_size = ?",(file_name, file_size)).fetchone() != None
 
-        
+
     def updateDB(self,folder_path,file_name,artist, title, album, genre, year, track, file_size, file_date, track_duration, bitrate, quality, lame_encoded, file_type, comment, rating):
 
         if self.checkRecordExists(file_name, file_size):
@@ -106,7 +108,7 @@ class AudioFile():
                 #check for empty arrays
                 if len(value) < 1:
                     value = [None]
-                    
+
                 audioFileData[tag] = value
 
             #set audio info
@@ -120,7 +122,7 @@ class AudioFile():
                 audioFileData['quality'] = 'lossless'
             else:
                 audioFile = OggVorbis(file)
-                
+
             audioFileData['playtime'] = int(audioFile.info.length)
             audioFileData['bitrate'] = int(audioFile.info.bitrate/1000)
 
@@ -155,7 +157,7 @@ class Scan():
                 if self.scanFiles(files, root) > 0:
                     filecount = filecount + len(files)
 
-            
+
         print "checked %d files" % filecount
         self.db.conn.close()
 
@@ -163,7 +165,7 @@ class Scan():
         trackcount = 0
         audioFile = AudioFile()
         currentAlbum = ''
-        
+
         for file in [f for f in folderfiles]:
             fileExtension = getFileExtension(file).lower()
             if fileExtension in self.supportedMusicFileExtensions:
@@ -258,7 +260,7 @@ class Predatum:
         except BadStatusLine, e:
             print "the status line can’t be parsed as a valid HTTP/1.0 or 1.1 status line: ", e.line
 
-    def checkIfAuthenticated(self, response): 
+    def checkIfAuthenticated(self, response):
         json = simplejson.loads(response);
         if ('error' in json):
           print 'Login page returned: '  + json['error']
@@ -266,13 +268,15 @@ class Predatum:
 
 
     def getAlbumsToPost(self):
-        
+
         albumsToUpdate = {}
         previousAlbum = currentAlbum = ''
+#        print "quering database to get get album to post at %d" % (time.time() - elapsedTime)
         recordsToUpdate = self.localdb.getFolderNotPostedToSite()
         albumCounter = 0
         trackCounter = 0
-
+#        print "album to post returned from database at %d" % (time.time() - elapsedTime)
+#        print "preparing dictionary to post"
         for row in recordsToUpdate:
             '''
             folder_path, file_name, artist, title, album,
@@ -282,7 +286,7 @@ class Predatum:
             currentAlbum = row[4]
 
             if currentAlbum != previousAlbum:
-                
+
                 trackCounter = 0
                 albumCounter = albumCounter + 1
                 albumsToUpdate[albumCounter] = {}
@@ -309,9 +313,9 @@ class Predatum:
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['file_type'] = row[14]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['comment'] = row[15]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['rating'] = row[16]
-            
-            trackCounter = trackCounter + 1
 
+            trackCounter = trackCounter + 1
+#        print "dictionary created at %d" % (time.time() - elapsedTime)
         return albumsToUpdate
 
 
@@ -320,8 +324,10 @@ class Predatum:
         headers = {"Content-type" : "application/json; charset=utf-8", \
                     "Accept" : "*/*"}
 
+
         albumstopost = self.getAlbumsToPost().items()
 
+#        print "ready to post to predatum at %d" % (time.time() - elapsedTime)
         if len(albumstopost) < 1:
             print "site up to date"
             quit()
@@ -339,6 +345,7 @@ class Predatum:
                 if json['processed'] == 1:
                     self.setAlbumSubmitted(album)
                     print json['message']
+#                    print "posted ok at %d" % (time.time() - elapsedTime)
                 else:
                     print json['message']
                     quit()
@@ -362,7 +369,7 @@ class Predatum:
 
 
             return True
-                        
+
 
     def setAlbumSubmitted(self, album):
         for index, track in album['tracks'].items():
@@ -379,12 +386,13 @@ def main():
 
     #scan = Scan(config)
     #scan.scanFolders(config.get("options","musicdir"))
-    
+
     pred = Predatum(config)
     while pred.updateSite():
         sleep(0.1) #prevents CPU going 100%
 
-    
+
 
 if __name__ == "__main__":
+#    elapsedTime = time.time();
     main()
