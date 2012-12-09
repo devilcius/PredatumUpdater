@@ -1,6 +1,5 @@
 # -*- coding: utf_8 -*-
-import errors
-from time import sleep, clock, time
+#from time import sleep, clock, time
 import urllib2
 from urllib2 import URLError, HTTPError
 import os.path
@@ -27,7 +26,7 @@ class Error(Exception):
 class DataBase():
 
     def __init__(self):
-        self.conn = connect('music.db')
+        self.conn = connect('predatum_music.db')
         self.curs = self.conn.cursor()
         self.createLocalTable()
 
@@ -71,7 +70,7 @@ class DataBase():
             with self.conn:
                 self.conn.execute("update tracks set pred_updated = 1 where file_name = ? and file_size = ?",(file_name, int(file_size)))
                 return True
-        except sqlite3.IntegrityError:
+        except IntegrityError:
             return False
 
 
@@ -137,31 +136,32 @@ class AudioFile():
 class Scan():
 
 
-    def __init__(self, config):
+    def __init__(self, recheck):
         self.supportedMusicFileExtensions = ['.mp3','.flac','.ogg']
-        self.recheckFolders = config.get("options","recheck")
+        self.recheckFolders = recheck
+
         self.db = DataBase();
 
-    def scanFolders(self,rootfolder):
+    def folders(self,rootfolder):
         filecount = 0
         for root, dirs, files in os.walk(rootfolder):
             print "about to check %s" % root
-            if self.recheckFolders == '0':
+            if self.recheckFolders:
                 folderName = "%s/" % root.decode('utf-8')
                 if self.db.folderAlreadyChecked(folderName):
                     print 'folder already checked, skipping'
                 else:
-                    if self.scanFiles(files, root) > 0:
+                    if self.files(files, root) > 0:
                         filecount = filecount + len(files)
             else:
-                if self.scanFiles(files, root) > 0:
+                if self.files(files, root) > 0:
                     filecount = filecount + len(files)
 
 
         print "checked %d files" % filecount
-        self.db.conn.close()
+        return True
 
-    def scanFiles(self, folderfiles, folderpath):
+    def files(self, folderfiles, folderpath):
         trackcount = 0
         audioFile = AudioFile()
         currentAlbum = ''
@@ -197,15 +197,11 @@ class Predatum:
     site = "http://192.168.2.40"
     userAgent = 'predatumupdater [1.0]'
 
-    def __init__(self, config):
+    def __init__(self, user, password):
 
-        self.config = config
-        self.username = self.config.get("predatum","username")
-        self.password = self.config.get("predatum","password")
-        self.isProxyEnabled = self.config.get("proxy","enabled")
-        self.proxyServer = self.config.get("proxy","server")
-        self.proxyPort = self.config.get("proxy","port")
-        self.cookieFile = 'cookie'
+        self.username = user
+        self.password = password
+        self.cookieFile = 'predatum_cookie'
         self.setUpCookiesAndUserAgent()
         self.localdb = DataBase()
 
@@ -330,7 +326,6 @@ class Predatum:
 #        print "ready to post to predatum at %d" % (time.time() - elapsedTime)
         if len(albumstopost) < 1:
             print "site up to date"
-            quit()
 
         for index, album in albumstopost:
             params = simplejson.dumps(album)
@@ -380,12 +375,14 @@ def getFileExtension(filename):
     return os.path.splitext(filename)[1]
 
 
+
+
 def main():
     config = ConfigParser.ConfigParser()
     config.read('predatumupdater.cfg')
 
     #scan = Scan(config)
-    #scan.scanFolders(config.get("options","musicdir"))
+    #scan.folders(config.get("options","musicdir"))
 
     pred = Predatum(config)
     while pred.updateSite():
@@ -394,5 +391,4 @@ def main():
 
 
 if __name__ == "__main__":
-#    elapsedTime = time.time();
-    main()
+    print "Module to update local and remote predatum db"
