@@ -4,3 +4,4 @@ git-excluded
 *.cfg
 errors.py*
 cookie
+predatumupdater.cfg

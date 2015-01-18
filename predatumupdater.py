@@ -9,12 +9,13 @@ import cookielib
 from httplib import BadStatusLine
 import mutagen
 from mutagen.flac import FLAC
-from mutagen.mp3 import MP3
+from mp3 import MP3
 from mutagen.oggvorbis import OggVorbis
 import os
 from sqlite3 import *
 import json as simplejson
 import re
+from time import sleep
 
 #elapsedTime = 0;
 
@@ -26,7 +27,7 @@ class Error(Exception):
 class DataBase():
 
     def __init__(self):
-        self.conn = connect('predatum_music.db')
+        self.conn = connect('music.db')
         self.curs = self.conn.cursor()
         self.createLocalTable()
 
@@ -67,9 +68,8 @@ class DataBase():
 
     def setRecordUpdatedInPredatum(self, file_name, file_size):
         try:
-            with self.conn:
-                self.conn.execute("update tracks set pred_updated = 1 where file_name = ? and file_size = ?",(file_name, int(file_size)))
-                return True
+            self.conn.execute("update tracks set pred_updated = 1 where file_name = ? and file_size = ?",(file_name, int(file_size)))
+            return True
         except IntegrityError:
             return False
 
@@ -142,7 +142,7 @@ class Scan():
 
         self.db = DataBase();
 
-    def folders(self,rootfolder):
+    def folders(self, rootfolder):
         filecount = 0
         for root, dirs, files in os.walk(rootfolder):
             print "about to check %s" % root
@@ -194,7 +194,7 @@ class Scan():
 
 class Predatum:
 
-    site = "http://192.168.2.40"
+    site = "http://192.168.2.40:2014"
     userAgent = 'predatumupdater [1.0]'
 
     def __init__(self, user, password):
@@ -218,7 +218,7 @@ class Predatum:
         try:
             self.authenticate()
             print "using cookie"
-        except errors.AuthError:
+        except Error:
             self.getFreshCookies()
 
     def loadCookiesFromFile(self, cookieJar):
@@ -238,11 +238,11 @@ class Predatum:
         print "new cookie created"
 
     def authenticate(self):
-        loginURL = Predatum.site + "/api/login/format/json"
-        data = urllib.urlencode({'login': self.username,
+        loginURL = Predatum.site + "/api/user/authenticate"
+        data = urllib.urlencode({'email': self.username,
                      'password': self.password,
                      'remember': '1',
-                     'submit': 'Let me in'})
+                     'submit': 'Submit'})
         try:
             request = urllib2.Request(loginURL, data)
             response = urllib2.urlopen(request)
@@ -257,8 +257,8 @@ class Predatum:
             print "the status line can’t be parsed as a valid HTTP/1.0 or 1.1 status line: ", e.line
 
     def checkIfAuthenticated(self, response):
-        json = simplejson.loads(response);
-        if ('error' in json):
+        json = simplejson.loads(response)
+        if (json['error']):
           print 'Login page returned: '  + json['error']
           quit()
 
@@ -267,10 +267,12 @@ class Predatum:
 
         albumsToUpdate = {}
         previousAlbum = currentAlbum = ''
+        firstArtist = ''
 #        print "quering database to get get album to post at %d" % (time.time() - elapsedTime)
         recordsToUpdate = self.localdb.getFolderNotPostedToSite()
         albumCounter = 0
         trackCounter = 0
+        isAlbumVA = False
 #        print "album to post returned from database at %d" % (time.time() - elapsedTime)
 #        print "preparing dictionary to post"
         for row in recordsToUpdate:
@@ -280,6 +282,8 @@ class Predatum:
             bitrate, quality, lame_encoded, file_type
             '''
             currentAlbum = row[4]
+            if trackCounter == 0:
+                firstArtist = row[2]
 
             if currentAlbum != previousAlbum:
 
@@ -289,6 +293,8 @@ class Predatum:
                 albumsToUpdate[albumCounter]['name'] = row[4]
                 albumsToUpdate[albumCounter]['folder_name'] = row[0]
                 albumsToUpdate[albumCounter]['year'] = row[6]
+                albumsToUpdate[albumCounter]['quality'] = row[12]
+                albumsToUpdate[albumCounter]['is_va'] = isAlbumVA
                 albumsToUpdate[albumCounter]['tracks'] = {}
 
                 if previousAlbum != row[4]:
@@ -305,10 +311,12 @@ class Predatum:
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['duration'] = row[10]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['bitrate'] = row[11]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['quality'] = row[12]
-            albumsToUpdate[albumCounter]['tracks'][trackCounter]['lame_encoded'] = row[13]
+            albumsToUpdate[albumCounter]['tracks'][trackCounter]['is_lame_encoded'] = row[13]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['file_type'] = row[14]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['comment'] = row[15]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['rating'] = row[16]
+            if firstArtist != row[2]:
+                isAlbumVA = True
 
             trackCounter = trackCounter + 1
 #        print "dictionary created at %d" % (time.time() - elapsedTime)
@@ -317,8 +325,8 @@ class Predatum:
 
     def updateSite(self):
 
-        headers = {"Content-type" : "application/json; charset=utf-8", \
-                    "Accept" : "*/*"}
+        headers = {"Content-type": "application/json; charset=utf-8",
+                    "Accept": "*/*"}
 
 
         albumstopost = self.getAlbumsToPost().items()
@@ -331,8 +339,8 @@ class Predatum:
             params = simplejson.dumps(album)
             responsebody = None
             try:
-                print "about to insert %s in %s" % (album['name'], album['folder_name'])
-                request = urllib2.Request(Predatum.site + "/api/release/format/json", params, headers)
+                print "about to insert %s from %s" % (album['name'], album['folder_name'])
+                request = urllib2.Request(Predatum.site + "/api/release/", params, headers)
                 response = urllib2.urlopen(request)
                 responsebody = response.read()
 
@@ -384,11 +392,12 @@ def main():
     #scan = Scan(config)
     #scan.folders(config.get("options","musicdir"))
 
-    pred = Predatum(config)
+    pred = Predatum('devilcius@gmail.com', '123456')
     while pred.updateSite():
-        sleep(0.1) #prevents CPU going 100%
+        sleep(0.1) #prevents CPU going nuts
 
 
 
 if __name__ == "__main__":
-    print "Module to update local and remote predatum db"
+    main()
+    #print "Module to update local and remote predatum db"
