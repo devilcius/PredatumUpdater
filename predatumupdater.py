@@ -8,8 +8,11 @@ import urllib
 import cookielib
 from httplib import BadStatusLine
 import mutagen
+# important:
+# modified flac.py file to get flac bitrate
+# (must be copy from ./ to /usr/local/lib/python2.7/dist-packages/mutagen/)
 from mutagen.flac import FLAC
-from mp3 import MP3
+from mp3 import MP3 #modified file to get lame_preset
 from mutagen.oggvorbis import OggVorbis
 import os
 from sqlite3 import *
@@ -69,6 +72,7 @@ class DataBase():
     def setRecordUpdatedInPredatum(self, file_name, file_size):
         try:
             self.conn.execute("update tracks set pred_updated = 1 where file_name = ? and file_size = ?",(file_name, int(file_size)))
+            self.conn.commit()
             return True
         except IntegrityError:
             return False
@@ -316,7 +320,7 @@ class Predatum:
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['comment'] = row[15]
             albumsToUpdate[albumCounter]['tracks'][trackCounter]['rating'] = row[16]
             if firstArtist != row[2]:
-                isAlbumVA = True
+                albumsToUpdate[albumCounter]['is_va'] = True
 
             trackCounter = trackCounter + 1
 #        print "dictionary created at %d" % (time.time() - elapsedTime)
@@ -394,7 +398,7 @@ def main():
 
     pred = Predatum('devilcius@gmail.com', '123456')
     while pred.updateSite():
-        sleep(0.1) #prevents CPU going nuts
+    	sleep(0.1) #prevents CPU going nuts
 
 
 
