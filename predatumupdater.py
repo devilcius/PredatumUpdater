@@ -198,7 +198,7 @@ class Scan():
 
 class Predatum:
 
-    site = "http://192.168.2.40:2014"
+    site = "http://localhost:2014"
     userAgent = 'predatumupdater [1.0]'
 
     def __init__(self, user, password):
@@ -393,8 +393,8 @@ def main():
     config = ConfigParser.ConfigParser()
     config.read('predatumupdater.cfg')
 
-    #scan = Scan(config)
-    #scan.folders(config.get("options","musicdir"))
+    # scan = Scan(config)
+    # scan.folders(config.get("options","musicdir"))
 
     pred = Predatum('devilcius@gmail.com', '123456')
     while pred.updateSite():
