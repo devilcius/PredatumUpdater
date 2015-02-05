@@ -343,7 +343,7 @@ class Predatum:
             params = simplejson.dumps(album)
             responsebody = None
             try:
-                print "about to insert %s from %s" % (album['name'], album['folder_name'])
+                print "about to insert %s from %s" % (album['name'], album['folder_path'])
                 request = urllib2.Request(Predatum.site + "/api/release/", params, headers)
                 response = urllib2.urlopen(request)
                 responsebody = response.read()
