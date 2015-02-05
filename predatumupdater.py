@@ -30,7 +30,7 @@ class Error(Exception):
 class DataBase():
 
     def __init__(self):
-        self.conn = connect('music.db')
+        self.conn = connect('music_test.db')
         self.curs = self.conn.cursor()
         self.createLocalTable()
 
@@ -295,7 +295,7 @@ class Predatum:
                 albumCounter = albumCounter + 1
                 albumsToUpdate[albumCounter] = {}
                 albumsToUpdate[albumCounter]['name'] = row[4]
-                albumsToUpdate[albumCounter]['folder_name'] = row[0]
+                albumsToUpdate[albumCounter]['folder_path'] = row[0]
                 albumsToUpdate[albumCounter]['year'] = row[6]
                 albumsToUpdate[albumCounter]['quality'] = row[12]
                 albumsToUpdate[albumCounter]['is_va'] = isAlbumVA
