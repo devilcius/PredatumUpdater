@@ -296,8 +296,7 @@ class Predatum:
                 albumsToUpdate[albumCounter] = {}
                 albumsToUpdate[albumCounter]['name'] = row[4]
                 albumsToUpdate[albumCounter]['folder_path'] = row[0]
-                albumsToUpdate[albumCounter]['year'] = row[6]
-                albumsToUpdate[albumCounter]['quality'] = row[12]
+                albumsToUpdate[albumCounter]['year'] = row[6]               
                 albumsToUpdate[albumCounter]['is_va'] = isAlbumVA
                 albumsToUpdate[albumCounter]['tracks'] = {}
 
@@ -398,7 +397,7 @@ def main():
 
     pred = Predatum('devilcius@gmail.com', '123456')
     while pred.updateSite():
-    	sleep(0.1) #prevents CPU going nuts
+     	sleep(0.1) #prevents CPU going nuts
 
 
 
