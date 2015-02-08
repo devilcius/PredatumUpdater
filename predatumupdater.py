@@ -343,7 +343,7 @@ class Predatum:
             responsebody = None
             try:
                 print "about to insert %s from %s" % (album['name'], album['folder_path'])
-                request = urllib2.Request(Predatum.site + "/api/release/", params, headers)
+                request = urllib2.Request(Predatum.site + "/api/release", params, headers)
                 response = urllib2.urlopen(request)
                 responsebody = response.read()
 
