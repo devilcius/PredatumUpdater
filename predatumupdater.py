@@ -30,7 +30,7 @@ class Error(Exception):
 class DataBase():
 
     def __init__(self):
-        self.conn = connect('music_test.db')
+        self.conn = connect('music.db')
         self.curs = self.conn.cursor()
         self.createLocalTable()
 
@@ -150,7 +150,7 @@ class Scan():
         filecount = 0
         for root, dirs, files in os.walk(rootfolder):
             print "about to check %s" % root
-            if self.recheckFolders:
+            if not self.recheckFolders:
                 folderName = "%s/" % root.decode('utf-8')
                 if self.db.folderAlreadyChecked(folderName):
                     print 'folder already checked, skipping'
@@ -296,7 +296,7 @@ class Predatum:
                 albumsToUpdate[albumCounter] = {}
                 albumsToUpdate[albumCounter]['name'] = row[4]
                 albumsToUpdate[albumCounter]['folder_path'] = row[0]
-                albumsToUpdate[albumCounter]['year'] = row[6]               
+                albumsToUpdate[albumCounter]['year'] = row[6]
                 albumsToUpdate[albumCounter]['is_va'] = isAlbumVA
                 albumsToUpdate[albumCounter]['tracks'] = {}
 
@@ -391,13 +391,12 @@ def getFileExtension(filename):
 def main():
     config = ConfigParser.ConfigParser()
     config.read('predatumupdater.cfg')
+    scan = Scan(config)
+    scan.folders(config.get("options","musicdir"))
 
-    # scan = Scan(config)
-    # scan.folders(config.get("options","musicdir"))
-
-    pred = Predatum('devilcius@gmail.com', '123456')
-    while pred.updateSite():
-     	sleep(0.1) #prevents CPU going nuts
+    #pred = Predatum('devilcius@gmail.com', '123456')
+    #while pred.updateSite():
+     	##sleep(0.1) #prevents CPU going nuts
 
 
 
