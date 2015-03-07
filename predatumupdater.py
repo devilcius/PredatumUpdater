@@ -141,6 +141,8 @@ class Scan():
 
 
     def __init__(self, recheck):
+        print recheck
+        quit()
         self.supportedMusicFileExtensions = ['.mp3','.flac','.ogg']
         self.recheckFolders = recheck
 
@@ -150,16 +152,16 @@ class Scan():
         filecount = 0
         for root, dirs, files in os.walk(rootfolder):
             print "about to check %s" % root
-            if not self.recheckFolders:
+            if self.recheckFolders:
+                if self.files(files, root) > 0:
+                    filecount = filecount + len(files)
+            else:
                 folderName = "%s/" % root.decode('utf-8')
                 if self.db.folderAlreadyChecked(folderName):
                     print 'folder already checked, skipping'
                 else:
                     if self.files(files, root) > 0:
                         filecount = filecount + len(files)
-            else:
-                if self.files(files, root) > 0:
-                    filecount = filecount + len(files)
 
 
         print "checked %d files" % filecount
@@ -389,14 +391,14 @@ def getFileExtension(filename):
 
 
 def main():
-    config = ConfigParser.ConfigParser()
-    config.read('predatumupdater.cfg')
-    scan = Scan(config)
-    scan.folders(config.get("options","musicdir"))
+    #config = ConfigParser.ConfigParser()
+    #config.read('predatumupdater.cfg')
+    #scan = Scan(config.get("options", "recheck"))
+    #scan.folders(config.get("options","musicdir"))
 
-    #pred = Predatum('devilcius@gmail.com', '123456')
-    #while pred.updateSite():
-     	##sleep(0.1) #prevents CPU going nuts
+    pred = Predatum('devilcius@gmail.com', '123456')
+    while pred.updateSite():
+     	sleep(0.1) #prevents CPU going nuts
 
 
 
