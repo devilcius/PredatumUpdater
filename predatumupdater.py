@@ -41,14 +41,14 @@ class DataBase():
           album text, genre text, year int, track integer, file_size integer, file_date text, track_duration integer,
           bitrate integer, quality text, lame_encoded integer, file_type text, comment text, rating integer, pred_updated integer)''')  # lint:ok
 
-    def checkRecordExists(self, file_name, file_size):
+    def checkRecordExists(self, file_name, file_size, album):
 
-        return self.conn.execute("select id from tracks where file_name = ? and file_size = ?",(file_name, file_size)).fetchone() != None
+        return self.conn.execute("select id from tracks where file_name = ? and file_size = ? and album = ?",(file_name, file_size, album)).fetchone() != None
 
 
-    def updateDB(self,folder_path,file_name,artist, title, album, genre, year, track, file_size, file_date, track_duration, bitrate, quality, lame_encoded, file_type, comment, rating):
+    def updateDB(self,folder_path,file_name, artist, title, album, genre, year, track, file_size, file_date, track_duration, bitrate, quality, lame_encoded, file_type, comment, rating):
 
-        if self.checkRecordExists(file_name, file_size):
+        if self.checkRecordExists(file_name, file_size, album):
             print "file %s from %s exists, skipping..." % (file_name, artist)
         else:
             self.curs.execute("insert into tracks (folder_path, file_name, artist, title, album, genre, year, track, file_size, file_date,\
@@ -141,8 +141,6 @@ class Scan():
 
 
     def __init__(self, recheck):
-        print recheck
-        quit()
         self.supportedMusicFileExtensions = ['.mp3','.flac','.ogg']
         self.recheckFolders = recheck
 
