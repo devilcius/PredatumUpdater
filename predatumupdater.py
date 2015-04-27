@@ -150,7 +150,7 @@ class Scan():
         filecount = 0
         for root, dirs, files in os.walk(rootfolder):
             print "about to check %s" % root
-            if self.recheckFolders:
+            if self.recheckFolders == '1':
                 if self.files(files, root) > 0:
                     filecount = filecount + len(files)
             else:
@@ -198,7 +198,7 @@ class Scan():
 
 class Predatum:
 
-    site = "http://localhost:2014"
+    site = "http://192.168.1.40:2014"
     userAgent = 'predatumupdater [1.0]'
 
     def __init__(self, user, password):
@@ -348,7 +348,7 @@ class Predatum:
                 responsebody = response.read()
 
                 json = simplejson.loads(responsebody)
-                if json['processed'] == 1:
+                if json['error'] != 1:
                     self.setAlbumSubmitted(album)
                     print json['message']
 #                    print "posted ok at %d" % (time.time() - elapsedTime)
