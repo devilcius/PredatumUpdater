@@ -348,7 +348,11 @@ class Predatum:
                 responsebody = response.read()
 
                 json = simplejson.loads(responsebody)
+<<<<<<< HEAD
                 if json['error'] != 1:
+=======
+                if not json['error']:
+>>>>>>> 868e4f287a392a5f639e5c3f477967389157a402
                     self.setAlbumSubmitted(album)
                     print json['message']
 #                    print "posted ok at %d" % (time.time() - elapsedTime)
