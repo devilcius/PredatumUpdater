@@ -198,7 +198,7 @@ class Scan():
 
 class Predatum:
 
-    site = "http://192.168.1.40:2014"
+    site = "http://predatum.com"
     userAgent = 'predatumupdater [1.0]'
 
     def __init__(self, user, password):
@@ -348,11 +348,7 @@ class Predatum:
                 responsebody = response.read()
 
                 json = simplejson.loads(responsebody)
-<<<<<<< HEAD
                 if json['error'] != 1:
-=======
-                if not json['error']:
->>>>>>> 868e4f287a392a5f639e5c3f477967389157a402
                     self.setAlbumSubmitted(album)
                     print json['message']
 #                    print "posted ok at %d" % (time.time() - elapsedTime)
@@ -393,12 +389,12 @@ def getFileExtension(filename):
 
 
 def main():
-    #config = ConfigParser.ConfigParser()
-    #config.read('predatumupdater.cfg')
-    #scan = Scan(config.get("options", "recheck"))
-    #scan.folders(config.get("options","musicdir"))
+    config = ConfigParser.ConfigParser()
+    config.read('predatumupdater.cfg')
+    scan = Scan(config.get("options", "recheck"))
+    scan.folders(config.get("options","musicdir"))
 
-    pred = Predatum('devilcius@gmail.com', '123456')
+    pred = Predatum('devilcius@gmail.com', '')
     while pred.updateSite():
      	sleep(0.1) #prevents CPU going nuts
 
