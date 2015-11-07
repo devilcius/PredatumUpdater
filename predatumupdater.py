@@ -10,7 +10,8 @@ from httplib import BadStatusLine
 import mutagen
 # important:
 # modified flac.py file to get flac bitrate
-# (must be copy from ./ to /usr/local/lib/python2.7/dist-packages/mutagen/)
+# (must be copy from ./ to /usr/local/lib/python2.7/dist-packages/mutagen/
+# or ~/.local/lib/python2.7/site-packages)
 from mutagen.flac import FLAC
 from mp3 import MP3 #modified file to get lame_preset
 from mutagen.oggvorbis import OggVorbis
