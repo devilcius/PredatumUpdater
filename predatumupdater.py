@@ -395,7 +395,7 @@ def main():
     scan = Scan(config.get("options", "recheck"))
     scan.folders(config.get("options","musicdir"))
 
-    pred = Predatum('devilcius@gmail.com', '')
+    pred = Predatum(config.get("predatum", "username"), config.get("predatum", "password"))
     while pred.updateSite():
      	sleep(0.1) #prevents CPU going nuts
 
